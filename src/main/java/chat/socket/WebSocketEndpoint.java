@@ -28,11 +28,10 @@ public class WebSocketEndpoint
     public void onOpen(Session session, @PathParam("token") String token)
     {
         System.out.println("New connection " + session.getId());
-        // System.out.println(token);
     }
 
     @OnMessage
-    public String handleTextMessage(Session session, String payload) throws IOException
+    public void handleTextMessage(Session session, String payload) throws IOException
     {
         System.out.println("-------------------------------------");
         System.out.println("New Text payload Received");
@@ -51,27 +50,10 @@ public class WebSocketEndpoint
 
         if (rooms.isEmpty()) {
             this.createRoom(roomId);
-            return payload;
+            return;
         }
 
         this.broadCastMessageToAllUsers(roomId);
-
-
-        // System.out.println("New Text payload Received");
-        // System.out.println("message " + payload);
-        // JsonObject jsonObject = this.jsonParser.parse(payload).getAsJsonObject();
-
-        // String roomId = jsonObject.get("roomId").getAsString();
-        // String message = jsonObject.get("message").getAsString();
-
-
-
-        // System.out.println("New Text Message Received");
-        // System.out.println("message " + message);
-        // System.out.println("room " + roomId);
-        // System.out.println(session.getId());
-
-        return message;
     }
 
     @OnMessage(maxMessageSize = 1024000)
@@ -85,17 +67,24 @@ public class WebSocketEndpoint
     {
         Room room = this.getCurrentRoom(roomId);
         Set<Session> users = room.getUsers();
-
+        boolean userNotExist = true;
         synchronized (users) 
         {
             for (Session user : users)
             {
-                System.out.println("Broadcasting user " + user.getId());
-                if (!this.user.equals(user)) {
-                    System.out.println("Message sent to " + user.getId());
-                    user.getBasicRemote().sendText(this.payload);
+                if (this.user.equals(user)) {
+                    userNotExist = false;
+                    continue;
                 }
+
+                System.out.println("Broadcasting user " + user.getId());
+                System.out.println("Message sent to " + user.getId());
+                user.getBasicRemote().sendText(this.payload);
             }
+        }
+
+        if (userNotExist) {
+            room.addUser(this.user);
         }
 
         System.out.println("Message broad casted");
@@ -112,7 +101,7 @@ public class WebSocketEndpoint
             }
         }
 
-        return null;
+        return this.createRoom(roomId);
     }
 
     private Room createRoom(String roomId)
