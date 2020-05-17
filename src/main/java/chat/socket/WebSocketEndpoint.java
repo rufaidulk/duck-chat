@@ -11,10 +11,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import javax.websocket.OnOpen;
+import javax.websocket.OnClose;
 import javax.websocket.OnMessage;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import javax.websocket.Session;
+import javax.websocket.CloseReason;
 
 @ServerEndpoint(value = "/socket/{token}")
 public class WebSocketEndpoint 
@@ -61,6 +63,16 @@ public class WebSocketEndpoint
     {
         System.out.println("New Binary Message Received");
         return buffer;
+    }
+
+    @OnClose
+    public void onClose(Session session, CloseReason reason)
+    {
+        System.out.println("-----------------------------------");
+        System.out.println("Closing reason " + reason);
+        System.out.println("Closing session " + session.getId());
+        this.removeSessionFromRooms(session);
+        System.out.println("-----------------------------------");
     }
 
     private void broadCastMessageToAllUsers(String roomId) throws IOException
@@ -114,6 +126,22 @@ public class WebSocketEndpoint
         System.out.println("Room Id " + roomId);
         System.out.println(rooms);
         return room;
+    }
+
+    private void removeSessionFromRooms(Session leavingUser)
+    {
+        for (Room room : rooms)
+        {
+            Set<Session> users = room.getUsers();
+
+            for (Session user : users)
+            {
+                if (user.getId().equals(leavingUser.getId())) {
+                    users.remove(leavingUser);
+                    break;
+                }
+            }
+        }
     }
 
 }
