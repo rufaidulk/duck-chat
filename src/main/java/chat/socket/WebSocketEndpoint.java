@@ -12,6 +12,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import javax.websocket.OnOpen;
 import javax.websocket.OnClose;
+import javax.websocket.OnError;
 import javax.websocket.OnMessage;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
@@ -23,13 +24,15 @@ public class WebSocketEndpoint
 {
     private Session user;
     private String payload;
-    private JsonParser jsonParser = new JsonParser();
+    private JsonParser jsonParser;
     private static Set<Room> rooms = Collections.synchronizedSet(new HashSet<Room>());
 
     @OnOpen
     public void onOpen(Session session, @PathParam("token") String token)
     {
         System.out.println("New connection " + session.getId());
+        this.user = session;
+        this.jsonParser = new JsonParser();
     }
 
     @OnMessage
@@ -47,7 +50,6 @@ public class WebSocketEndpoint
         System.out.println("room " + roomId);
         System.out.println(session.getId());
 
-        this.user = session;
         this.payload = payload;
 
         if (rooms.isEmpty()) {
@@ -63,6 +65,14 @@ public class WebSocketEndpoint
     {
         System.out.println("New Binary Message Received");
         return buffer;
+    }
+    
+    @OnError
+    public void errorHandler(Session session, Throwable th)
+    {
+        System.out.println("----- Socket Error -----");
+        System.out.println("Session " + session.getId());
+        System.out.println(th.getMessage());
     }
 
     @OnClose
