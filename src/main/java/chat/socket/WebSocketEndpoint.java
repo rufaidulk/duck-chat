@@ -1,15 +1,12 @@
 package chat.socket;
 
 import chat.model.Room;
+import chat.model.MysqlConnectionPool;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import javax.websocket.OnOpen;
 import javax.websocket.OnClose;
 import javax.websocket.OnError;
@@ -18,21 +15,35 @@ import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import javax.websocket.Session;
 import javax.websocket.CloseReason;
+import javax.websocket.EndpointConfig;
+import javax.websocket.server.ServerEndpointConfig;
 
-@ServerEndpoint(value = "/socket/{token}")
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+@ServerEndpoint(value = "/socket/{token}",
+    configurator = WebSocketServerConfigurator.class)
 public class WebSocketEndpoint 
 {
     private Session user;
     private String payload;
     private JsonParser jsonParser;
+    private MysqlConnectionPool mysqlConnectionPool;
+    private ServerEndpointConfig serverEndpointConfig;
     private static Set<Room> rooms = Collections.synchronizedSet(new HashSet<Room>());
 
     @OnOpen
-    public void onOpen(Session session, @PathParam("token") String token)
+    public void onOpen(EndpointConfig config, Session session)
     {
         System.out.println("New connection " + session.getId());
         this.user = session;
         this.jsonParser = new JsonParser();
+        this.serverEndpointConfig = (ServerEndpointConfig) config;
+        WebSocketServerConfigurator wssc = 
+            (WebSocketServerConfigurator) this.serverEndpointConfig.getConfigurator();
+        this.mysqlConnectionPool = wssc.getMysqlConnectionPool();
+        this.mysqlConnectionPool.printDbStatus();
     }
 
     @OnMessage
