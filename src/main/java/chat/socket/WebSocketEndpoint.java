@@ -2,6 +2,7 @@ package chat.socket;
 
 import chat.model.Room;
 import chat.model.MysqlConnectionPool;
+import chat.job.RoomDatabaseJob;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -62,6 +63,10 @@ public class WebSocketEndpoint
         System.out.println(session.getId());
 
         this.payload = payload;
+
+        RoomDatabaseJob roomDbJob = new RoomDatabaseJob(this.mysqlConnectionPool.getDbConnection(), jsonObject);
+        Thread dbThread = new Thread(roomDbJob);
+        dbThread.start();
 
         if (rooms.isEmpty()) {
             this.createRoom(roomId);
