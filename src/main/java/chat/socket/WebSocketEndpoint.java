@@ -18,6 +18,9 @@ import javax.websocket.Session;
 import javax.websocket.CloseReason;
 import javax.websocket.EndpointConfig;
 import javax.websocket.server.ServerEndpointConfig;
+import java.io.InputStream;
+import java.io.ByteArrayInputStream;
+import java.net.URLConnection;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -52,10 +55,10 @@ public class WebSocketEndpoint
     {
         System.out.println("-------------------------------------");
         System.out.println("New Text payload Received");
-        System.out.println("message " + payload);
+        System.out.println("payload " + payload);
         JsonObject jsonObject = this.jsonParser.parse(payload).getAsJsonObject();
 
-        String roomId = jsonObject.get("roomId").getAsString();
+        String roomId = jsonObject.get("room_id").getAsString();
         String message = jsonObject.get("message").getAsString();
 
         System.out.println("message " + message);
@@ -77,10 +80,13 @@ public class WebSocketEndpoint
     }
 
     @OnMessage(maxMessageSize = 1024000)
-    public byte[] handleBinaryMessage(byte[] buffer) 
+    public void handleBinaryMessage(byte[] buffer) throws IOException
     {
         System.out.println("New Binary Message Received");
-        return buffer;
+        System.out.println(buffer);
+        InputStream is = new ByteArrayInputStream(buffer);
+        String mimeType = URLConnection.guessContentTypeFromStream(is);
+        System.out.println(mimeType);
     }
     
     @OnError

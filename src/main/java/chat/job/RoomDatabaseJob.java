@@ -36,12 +36,13 @@ public class RoomDatabaseJob implements Runnable
 
     private void insertPayloadToChatTable() throws SQLException
     {
-        String query = "INSERT INTO chats (room_id, sender_id, message) VALUES (?, ?, ?)";
+        String query = "INSERT INTO chats (room_id, sender_id, message, media_type) VALUES (?, ?, ?, ?)";
         PreparedStatement prepStmt = this.conn.prepareStatement(query);
 
-        prepStmt.setString(1, this.payload.get("roomId").getAsString());
-        prepStmt.setString(2, this.payload.get("id").getAsString());
+        prepStmt.setString(1, this.payload.get("room_id").getAsString());
+        prepStmt.setString(2, this.payload.get("sender_id").getAsString());
         prepStmt.setString(3, this.payload.get("message").getAsString());
+        prepStmt.setString(4, this.payload.get("media_type").getAsString());
 
         prepStmt.executeUpdate();
     }
